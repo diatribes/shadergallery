@@ -1,4 +1,4 @@
-//#define _POSIX_C_SOURCE 200809L
+#define _POSIX_C_SOURCE 200809L
 
 #include <stdlib.h>
 #include <string.h>
@@ -6,8 +6,6 @@
 #include "raylib.h"
 #include "rlgl.h"
 
-#define RAYGUI_IMPLEMENTATION
-#include "raygui.h"
 
 #if defined(PLATFORM_WEB)
     #include <emscripten/emscripten.h>
