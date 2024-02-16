@@ -9,14 +9,15 @@
 
 #if defined(PLATFORM_WEB)
     #include <emscripten/emscripten.h>
+    #include <emscripten/html5.h>
     #define GLSL_VERSION 100
 #else
     #define GLSL_VERSION 330
 #endif
 
 #define TARGET_FPS 100
-#define W 320
-#define H 200
+#define W 800
+#define H 450
 
 enum shader_enum{
     shader_enum_plasma = 0,
@@ -49,15 +50,21 @@ void main_loop_body()
     float w = W;
     float h = H;
 
-    UpdateCamera(&camera, CAMERA_FIRST_PERSON);
+#if defined(PLATFORM_WEB)
+    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        emscripten_request_pointerlock("#canvas", 0);
+    }
+#endif
 
     if (IsKeyPressed(KEY_F)) {
-        if (IsWindowFullscreen()) {
-            RestoreWindow();
-        } else {
-            ToggleBorderlessWindowed();
-        }
+#if defined(PLATFORM_WEB)
+        ToggleBorderlessWindowed();
+#else
+        ToggleBorderlessWindowed();
+#endif
     }
+
+    UpdateCamera(&camera, CAMERA_FIRST_PERSON);
 
     for (int i = 0; i < shader_enum_count; i++) {
         int timeloc = GetShaderLocation(shader[i], "time");
@@ -84,7 +91,7 @@ void main_loop_body()
 int main(int argc, char * argv[])
 {
 
-    InitWindow(W, H, "GPU Plasma");
+    InitWindow(W, H, "Shader Gallery");
     
     shader[shader_enum_plasma] = LoadShader(0, TextFormat("resources/plasma_%i.fs", GLSL_VERSION));
     shader[shader_enum_curtains] = LoadShader(0, TextFormat("resources/curtains_%i.fs", GLSL_VERSION));
@@ -106,16 +113,15 @@ int main(int argc, char * argv[])
     shader_frame[shader_enum_curtains].z = 0.f;
 
 #if defined(PLATFORM_WEB)
+    emscripten_request_pointerlock("#canvas", 1);
     emscripten_set_main_loop(main_loop_body, 120, 1);
 #else
-
     SetTargetFPS(TARGET_FPS);
     DisableCursor();
     ToggleBorderlessWindowed();
     while (!WindowShouldClose()) {
         main_loop_body();
     }
-    EnableCursor();
 #endif
 
     CloseWindow();
