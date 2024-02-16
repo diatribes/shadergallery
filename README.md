@@ -1,4 +1,4 @@
-# plasma-gpu
+# Shader Gallery
 3D shader gallery using Raylib<br>
 
 
