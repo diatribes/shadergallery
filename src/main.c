@@ -5,6 +5,7 @@
 #include <math.h>
 #include "raylib.h"
 #include "rlgl.h"
+#include "raymath.h"        // Required for: Vector3, Quaternion and Matrix functionality
 
 
 #if defined(PLATFORM_WEB)
@@ -35,12 +36,91 @@ extern inline float dist(float x1, float y1, float x2, float y2)
     return sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
 }
 
-void draw_shader()
+/*
+ * Adapted from rmodels.c: DrawBillboardPro()
+ */
+void draw_shader_frame(Camera camera, Texture2D texture, Vector3 position, Vector3 up, Vector2 size, Vector2 origin, Color tint)
 {
+    Rectangle source = { 0, 0, texture.width, texture.height };
+    Vector2 sizeRatio = { size.x*fabsf((float)source.width/source.height), size.y };
+
+    Vector3 right = { 1.0, 0, 0};
+    Vector3 rightScaled = Vector3Scale(right, sizeRatio.x/2);
+    Vector3 upScaled = Vector3Scale(up, sizeRatio.y/2);
+
+    Vector3 p1 = Vector3Add(rightScaled, upScaled);
+    Vector3 p2 = Vector3Subtract(rightScaled, upScaled);
+
+    Vector3 topLeft = Vector3Scale(p2, -1);
+    Vector3 topRight = p1;
+    Vector3 bottomRight = p2;
+    Vector3 bottomLeft = Vector3Scale(p1, -1);
+
+    topLeft = Vector3Add(topLeft, position);
+    topRight = Vector3Add(topRight, position);
+    bottomRight = Vector3Add(bottomRight, position);
+    bottomLeft = Vector3Add(bottomLeft, position);
+
+    rlSetTexture(texture.id);
+
+    rlBegin(RL_QUADS);
+        rlColor4ub(tint.r, tint.g, tint.b, tint.a);
+
+        if (sizeRatio.x * sizeRatio.y >= 0.0f)
+        {
+            // Bottom-left corner for texture and quad
+            rlTexCoord2f((float)source.x/texture.width, (float)source.y/texture.height);
+            rlVertex3f(topLeft.x, topLeft.y, topLeft.z);
+
+            // Top-left corner for texture and quad
+            rlTexCoord2f((float)source.x/texture.width, (float)(source.y + source.height)/texture.height);
+            rlVertex3f(bottomLeft.x, bottomLeft.y, bottomLeft.z);
+
+            // Top-right corner for texture and quad
+            rlTexCoord2f((float)(source.x + source.width)/texture.width, (float)(source.y + source.height)/texture.height);
+            rlVertex3f(bottomRight.x, bottomRight.y, bottomRight.z);
+
+            // Bottom-right corner for texture and quad
+            rlTexCoord2f((float)(source.x + source.width)/texture.width, (float)source.y/texture.height);
+            rlVertex3f(topRight.x, topRight.y, topRight.z);
+        }
+        else
+        {
+            // Reverse vertex order if the size has only one negative dimension
+            rlTexCoord2f((float)(source.x + source.width)/texture.width, (float)source.y/texture.height);
+            rlVertex3f(topRight.x, topRight.y, topRight.z);
+
+            rlTexCoord2f((float)(source.x + source.width)/texture.width, (float)(source.y + source.height)/texture.height);
+            rlVertex3f(bottomRight.x, bottomRight.y, bottomRight.z);
+
+            rlTexCoord2f((float)source.x/texture.width, (float)(source.y + source.height)/texture.height);
+            rlVertex3f(bottomLeft.x, bottomLeft.y, bottomLeft.z);
+
+            rlTexCoord2f((float)source.x/texture.width, (float)source.y/texture.height);
+            rlVertex3f(topLeft.x, topLeft.y, topLeft.z);
+        }
+
+    rlEnd();
+
+    rlSetTexture(0);
+}
+
+void draw_shader_frames()
+{
+
     for(int i = 0; i < shader_enum_count; i++) {
+
+        Vector2 size = {1.0, 1.0};
+        Vector2 origin = {0, 0};
+        Vector3 up = (Vector3){ 0.0f, 1.0f, 0.0f };
+
+        rlDisableBackfaceCulling();
+        rlDisableDepthMask();
         BeginShaderMode(shader[i]);
-            DrawBillboard(camera, target[i].texture, shader_frame[i], 2.0f, WHITE);
+            draw_shader_frame(camera, target[i].texture, shader_frame[i], up, size, origin, WHITE);
         EndShaderMode();
+        rlEnableBackfaceCulling();
+        rlEnableDepthMask();
     }
 }
 
@@ -80,8 +160,8 @@ void main_loop_body()
         ClearBackground(WHITE);
 
         BeginMode3D(camera);
-            DrawGrid(60, .5f);
-            draw_shader();
+            DrawGrid(60, 1.0f);
+            draw_shader_frames();
         EndMode3D();
         DrawFPS(10, 10);
 
@@ -99,7 +179,7 @@ int main(int argc, char * argv[])
     target[shader_enum_curtains] = LoadRenderTexture(GetScreenWidth(), GetScreenHeight());
 
     camera.position = (Vector3){ -7.f, 1.0f, -9.f };    // Camera position
-    camera.target = (Vector3){ 2.4f, 3.0f, 0.0f };    // Camera looking at point
+    camera.target = (Vector3){ 2.4f, .5f, -1.0f };    // Camera looking at point
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
     camera.fovy = 45.0f;                                // Camera field-of-view Y
     camera.projection = CAMERA_PERSPECTIVE;             // Camera projection type
