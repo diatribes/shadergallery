@@ -218,6 +218,14 @@ void main_loop_body()
     SetShaderValue(shader[shader_enum_lights], shader[shader_enum_lights].locs[SHADER_LOC_VECTOR_VIEW],
             (float[3]) { camera.position.x, camera.position.y, camera.position.z }, SHADER_UNIFORM_VEC3);
     for (int i = 0; i < MAX_LIGHTS; i++) {
+        float r = ((sin(time)*.5+.5)*255);
+        float g = ((sin(time * 2.0)*.5+.5)*255);
+        float b = ((sin(time / 2.0)*.5+.5)*255);
+        float p = ((sin(time / 3.0)*.5+.5)*255);
+        lights[0].color = (Color){p, 0, p, 1};
+        lights[1].color = (Color){r, 0, 0, 1};
+        lights[2].color = (Color){0, g, 0, 1};
+        lights[3].color = (Color){0, 0, b, 1};
         UpdateLightValues(shader[shader_enum_lights], lights[i]);
     }
 
@@ -280,13 +288,13 @@ void init()
     camera.projection = CAMERA_PERSPECTIVE;
    
     // Create lights
-    lights[0] = CreateLight(LIGHT_POINT, (Vector3) { -4.0, COLUMN_HEIGHT * 2,15.0 },
+    lights[0] = CreateLight(LIGHT_POINT, (Vector3) { -4.0, COLUMN_HEIGHT * 3,15.0 },
             Vector3Zero(), GREEN,  shader[shader_enum_lights]);
-    lights[1] = CreateLight(LIGHT_POINT, (Vector3) { 0.0, COLUMN_HEIGHT * 2, 15.0 },
+    lights[1] = CreateLight(LIGHT_POINT, (Vector3) { 0.0, COLUMN_HEIGHT * 3, 15.0 },
             Vector3Zero(), RED, shader[shader_enum_lights]);
-    lights[2] = CreateLight(LIGHT_POINT, (Vector3) { 4.0, COLUMN_HEIGHT * 2, 15.0 },
+    lights[2] = CreateLight(LIGHT_POINT, (Vector3) { 4.0, COLUMN_HEIGHT * 3, 15.0 },
             Vector3Zero(), BLUE, shader[shader_enum_lights]);
-    lights[3] = CreateLight(LIGHT_POINT, (Vector3) { 8.0, COLUMN_HEIGHT * 2, 15.0 },
+    lights[3] = CreateLight(LIGHT_POINT, (Vector3) { 8.0, COLUMN_HEIGHT * 3, 15.0 },
             Vector3Zero(), WHITE, shader[shader_enum_lights]);
     lights[0].enabled = true;
     lights[1].enabled = true;
