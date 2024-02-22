@@ -100,7 +100,7 @@ else
         endif
     else
        # CFLAGS += -s -O2
-		CFLAGS = -pedantic -Wall -std=c99 -lm `pkg-config --cflags --libs raylib`
+		CFLAGS = -pedantic -Wall -std=c99 -lm -lGL `pkg-config --cflags --libs raylib`
     endif
 endif
 
